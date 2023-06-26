@@ -825,7 +825,8 @@ class BaseAviary(gym.Env):
         thrust = np.array([0, 0, np.sum(forces)])
         thrust_world_frame = np.dot(rotation, thrust)
         force_world_frame = thrust_world_frame - np.array([0, 0, self.GRAVITY])
-        z_torques = np.array(rpm**2)*self.KM
+        # minus sign as dirty fix for BF
+        z_torques = -np.array(rpm**2)*self.KM
         z_torque = (-z_torques[0] + z_torques[1] - z_torques[2] + z_torques[3])
         if self.DRONE_MODEL==DroneModel.CF2X:
             x_torque = (forces[0] + forces[1] - forces[2] - forces[3]) * (self.L/np.sqrt(2))
@@ -840,6 +841,8 @@ class BaseAviary(gym.Env):
         torques = torques - np.cross(rpy_rates, np.dot(self.J, rpy_rates))
         rpy_rates_deriv = np.dot(self.J_INV, torques)
         no_pybullet_dyn_accs = force_world_frame / self.M
+        # switch off translational dynamics
+        # no_pybullet_dyn_accs = 0
         #### Update state ##########################################
         vel = vel + self.TIMESTEP * no_pybullet_dyn_accs
         rpy_rates = rpy_rates + self.TIMESTEP * rpy_rates_deriv
@@ -854,7 +857,9 @@ class BaseAviary(gym.Env):
         #### Note: the base's velocity only stored and not used ####
         p.resetBaseVelocity(self.DRONE_IDS[nth_drone],
                             vel,
-                            [-1, -1, -1], # ang_vel not computed by DYN
+                            # [-1, -1, -1], # ang_vel not computed by DYN
+                            # we need ang_vel for drone state feedback to controller
+                            np.dot(rotation, rpy_rates),
                             physicsClientId=self.CLIENT
                             )
         #### Store the roll, pitch, yaw rates for the next step ####
