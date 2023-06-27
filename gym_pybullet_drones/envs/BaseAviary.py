@@ -847,11 +847,18 @@ class BaseAviary(gym.Env):
         vel = vel + self.TIMESTEP * no_pybullet_dyn_accs
         rpy_rates = rpy_rates + self.TIMESTEP * rpy_rates_deriv
         pos = pos + self.TIMESTEP * vel
+        # Don't fall through floor
+        if pos[2] < 0:
+            pos[2] = 0
+            vel[2] = 0
         rpy = rpy + self.TIMESTEP * rpy_rates
+        # integrate using quaternion instead
+        quat = self._integrate(quat, rpy_rates, self.TIMESTEP)
         #### Set PyBullet's state ##################################
         p.resetBasePositionAndOrientation(self.DRONE_IDS[nth_drone],
                                           pos,
-                                          p.getQuaternionFromEuler(rpy),
+                                        #   p.getQuaternionFromEuler(rpy),
+                                          quat,
                                           physicsClientId=self.CLIENT
                                           )
         #### Note: the base's velocity only stored and not used ####
@@ -864,7 +871,25 @@ class BaseAviary(gym.Env):
                             )
         #### Store the roll, pitch, yaw rates for the next step ####
         self.rpy_rates[nth_drone,:] = rpy_rates
-    
+
+    def _integrate(self, quat, omega, dt):
+        omega_norm = np.linalg.norm(omega)
+        p, q, r = omega
+        print(omega_norm)
+        if np.isclose(omega_norm, 0):
+            return quat
+        lambda_ = np.array([
+            [0, -p, -q, -r],
+            [p,  0,  r, -q],
+            [q, -r,  0,  p],
+            [r,  q, -p,  0]
+        ]) * .5
+        theta = omega_norm * dt / 2
+        quat = np.array([quat[3], quat[0], quat[1], quat[2]])
+        quat = np.dot(np.eye(4) * np.cos(theta) + 2 / omega_norm * lambda_ * np.sin(theta), quat)
+        quat = np.array([quat[1], quat[2], quat[3], quat[0]])
+        return quat
+
     ################################################################################
 
     def _normalizedActionToRPM(self,
