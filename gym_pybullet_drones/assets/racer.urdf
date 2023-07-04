@@ -2,7 +2,7 @@
 
 <robot name="cf2">
 
-  <properties arm="0.109" kf="8.47e-9" km="7.94e-12" thrust2weight="4.17" max_speed_kmh="30" gnd_eff_coeff="11.36859" prop_radius="2.31348e-2" drag_coeff_xy="9.1785e-7" drag_coeff_z="10.311e-7" dw_coeff_1="2267.18" dw_coeff_2=".16" dw_coeff_3="-.11" />
+  <properties arm="0.109" kf="8.47e-9" km="2.13e-10" thrust2weight="4.17" max_speed_kmh="200" gnd_eff_coeff="11.36859" prop_radius="12.7e-2" drag_coeff_xy="9.1785e-7" drag_coeff_z="10.311e-7" dw_coeff_1="2267.18" dw_coeff_2=".16" dw_coeff_3="-.11" />
 
   <link name="base_link"> 
 
@@ -21,7 +21,7 @@
     <visual>
       <origin rpy="0 0 55" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="./cf2.dae" scale=" 1 1 1"/>
+        <mesh filename="./cf2.dae" scale="3 3 3"/>
       </geometry> 
       <material name="grey">
         <color rgba=".5 .5 .5 1"/>
