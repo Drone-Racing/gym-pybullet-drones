@@ -857,8 +857,6 @@ class BaseAviary(gym.Env):
         torques = torques - np.cross(rpy_rates, np.dot(self.J, rpy_rates))
         rpy_rates_deriv = np.dot(self.J_INV, torques)
         no_pybullet_dyn_accs = force_world_frame / self.M
-        # switch off translational dynamics
-        # no_pybullet_dyn_accs = 0
         #### Update state ##########################################
         vel = vel + self.PYB_TIMESTEP * no_pybullet_dyn_accs
         rpy_rates = rpy_rates + self.PYB_TIMESTEP * rpy_rates_deriv

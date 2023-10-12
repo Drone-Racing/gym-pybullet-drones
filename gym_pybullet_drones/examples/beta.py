@@ -62,7 +62,6 @@ from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
-from transforms3d.quaternions import rotate_vector
 
 DEFAULT_DRONES = DroneModel("racer")
 DEFAULT_PHYSICS = Physics("pyb")
@@ -169,7 +168,7 @@ def run(
 
         #### RC defaults to Betaflight #############################
         thro = 1000 # Positive up
-        yaw = 1500 # Positive CCW ??
+        yaw = 1500 # Positive CCW
         pitch = 1500 # Positive forward in x
         roll = 1500 # Positive right/forward in y
         if t > TRAJ_TIME:
