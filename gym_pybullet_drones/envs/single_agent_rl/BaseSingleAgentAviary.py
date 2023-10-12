@@ -19,10 +19,10 @@ class BaseSingleAgentAviary(BaseAviary):
                  initial_xyzs=None,
                  initial_rpys=None,
                  physics: Physics=Physics.PYB,
-                 freq: int=240,
-                 aggregate_phy_steps: int=1,
+                 pyb_freq: int = 240,
+                 ctrl_freq: int = 240,
                  gui=False,
-                 record=False, 
+                 record=False,
                  obs: ObservationType=ObservationType.KIN,
                  act: ActionType=ActionType.RPM
                  ):
@@ -43,10 +43,10 @@ class BaseSingleAgentAviary(BaseAviary):
             (NUM_DRONES, 3)-shaped array containing the initial orientations of the drones (in radians).
         physics : Physics, optional
             The desired implementation of PyBullet physics/custom dynamics.
-        freq : int, optional
-            The frequency (Hz) at which the physics engine steps.
-        aggregate_phy_steps : int, optional
-            The number of physics steps within one call to `BaseAviary.step()`.
+        pyb_freq : int, optional
+            The frequency at which PyBullet steps (a multiple of ctrl_freq).
+        ctrl_freq : int, optional
+            The frequency at which the environment steps.
         gui : bool, optional
             Whether to use PyBullet's GUI.
         record : bool, optional
@@ -72,9 +72,9 @@ class BaseSingleAgentAviary(BaseAviary):
                          num_drones=1,
                          initial_xyzs=initial_xyzs,
                          initial_rpys=initial_rpys,
-                         physics=physics, 
-                         freq=freq,
-                         aggregate_phy_steps=aggregate_phy_steps,
+                         physics=physics,
+                         pyb_freq=pyb_freq,
+                         ctrl_freq=ctrl_freq,
                          gui=gui,
                          record=record, 
                          obstacles=True, # Add obstacles for RGB observations and/or FlyThruGate
@@ -170,14 +170,19 @@ class BaseSingleAgentAviary(BaseAviary):
         """
         if self.ACT_TYPE == ActionType.RPM:
             return np.array(self.HOVER_RPM * (1+0.05*action))
-        elif self.ACT_TYPE == ActionType.PID: 
+        elif self.ACT_TYPE == ActionType.PID:
             state = self._getDroneStateVector(0)
-            rpm, _, _ = self.ctrl.computeControl(control_timestep=self.AGGR_PHY_STEPS*self.TIMESTEP, 
+            next_pos = self._calculateNextStep(
+                    current_position=state[0:3],
+                    destination=action,
+                    step_size=1,
+                )
+            rpm, _, _ = self.ctrl.computeControl(control_timestep=self.CTRL_TIMESTEP,
                                                  cur_pos=state[0:3],
                                                  cur_quat=state[3:7],
                                                  cur_vel=state[10:13],
                                                  cur_ang_vel=state[13:16],
-                                                 target_pos=state[0:3]+0.1*action
+                                                 target_pos=next_pos
                                                  )
             return rpm
         elif self.ACT_TYPE == ActionType.VEL:
@@ -186,7 +191,7 @@ class BaseSingleAgentAviary(BaseAviary):
                 v_unit_vector = action[0:3] / np.linalg.norm(action[0:3])
             else:
                 v_unit_vector = np.zeros(3)
-            rpm, _, _ = self.ctrl.computeControl(control_timestep=self.AGGR_PHY_STEPS*self.TIMESTEP, 
+            rpm, _, _ = self.ctrl.computeControl(control_timestep=self.CTRL_TIMESTEP,
                                                  cur_pos=state[0:3],
                                                  cur_quat=state[3:7],
                                                  cur_vel=state[10:13],
@@ -200,7 +205,7 @@ class BaseSingleAgentAviary(BaseAviary):
             return np.repeat(self.HOVER_RPM * (1+0.05*action), 4)
         elif self.ACT_TYPE == ActionType.ONE_D_PID:
             state = self._getDroneStateVector(0)
-            rpm, _, _ = self.ctrl.computeControl(control_timestep=self.AGGR_PHY_STEPS*self.TIMESTEP, 
+            rpm, _, _ = self.ctrl.computeControl(control_timestep=self.CTRL_TIMESTEP,
                                                  cur_pos=state[0:3],
                                                  cur_quat=state[3:7],
                                                  cur_vel=state[10:13],
