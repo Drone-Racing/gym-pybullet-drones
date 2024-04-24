@@ -12,7 +12,7 @@
   <depend>python3-matplotlib</depend>
   <depend>python3-stable-baselines3-pip</depend>
   <depend>python3-pybullet-pip</depend>
-  <depend>gymnasium-pip</depend>
+  <depend>python3-gymnasium-pip</depend>
 
   <exec_depend>rclpy</exec_depend>
 
